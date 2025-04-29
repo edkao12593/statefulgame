@@ -1,6 +1,7 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../widgets/gain_button.dart';
 import '../theme/app_theme.dart';
 
@@ -21,6 +22,21 @@ class _MuscleGamePageState extends State<MuscleGamePage> {
   void dispose() {
     _timer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _playClickSound() async {
+    final player = AudioPlayer();
+    await player.setPlayerMode(PlayerMode.lowLatency);
+    await player.play(AssetSource('sounds/click.mp3'));
+    // 一秒後自動 dispose
+    Future.delayed(const Duration(seconds: 1), () => player.dispose());
+  }
+
+  Future<void> _playGameOverSound() async {
+    final player = AudioPlayer();
+    await player.setPlayerMode(PlayerMode.mediaPlayer);
+    await player.play(AssetSource('sounds/game_over.mp3'));
+    Future.delayed(const Duration(seconds: 3), () => player.dispose());
   }
 
   void _startGame() {
@@ -47,18 +63,20 @@ class _MuscleGamePageState extends State<MuscleGamePage> {
   }
 
   void _increaseMuscle(int amount) {
+    _playClickSound();
     setState(() {
       muscleLevel += amount;
     });
   }
 
   void _showGameOver() {
+    _playGameOverSound();
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => PopScope<Object?>(
         canPop: false,
-        onPopInvokedWithResult: (didPop, result) {},
+        onPopInvokedWithResult: (_, __) {},
         child: AlertDialog(
           title: const Text('遊戲結束！'),
           content: Text('你的惡臭指數：$muscleLevel'),
@@ -115,7 +133,6 @@ class _MuscleGamePageState extends State<MuscleGamePage> {
               ],
             ),
           ),
-
           Expanded(
             child: Center(
               child: Card(
@@ -140,7 +157,6 @@ class _MuscleGamePageState extends State<MuscleGamePage> {
               ),
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.only(bottom: 40),
             child: GainButton(onPressed: () => _increaseMuscle(5)),
